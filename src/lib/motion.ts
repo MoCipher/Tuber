@@ -6,20 +6,26 @@
 type AnyFn = (...args: any[]) => any
 const isServer = typeof window === 'undefined'
 
-let motion: any
-let AnimatePresence: any = ({ children }: any) => children
+// default stub used synchronously so imports never see `undefined`.
+const stubComponent: AnyFn = (props: any) => (props && props.children) ? props.children : null
+const stubFn: AnyFn = (props: any) => props && props.children ? props.children : null
+const proxy = new Proxy(stubFn, { get: () => stubFn })
+
+let motion: any = proxy
+let AnimatePresence: any = stubComponent
 
 if (!isServer) {
-  // browser/runtime: use real framer-motion
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const fm = require('framer-motion')
-  motion = fm.motion
-  AnimatePresence = fm.AnimatePresence || AnimatePresence
+  // runtime/browser: asynchronously load framer-motion and replace the live bindings.
+  import('framer-motion').then((fm) => {
+    motion = fm.motion || motion
+    AnimatePresence = fm.AnimatePresence || AnimatePresence
+  }).catch(() => {
+    // keep stubs if import fails
+  })
 } else {
-  // server: no-op/stub that returns children for SSR
-  const stub: AnyFn = (props: any) => props && props.children ? props.children : null
-  const proxy = new Proxy(stub, { get: () => stub })
+  // server: keep stub (no DOM / animations)
   motion = proxy
 }
+
 
 export { motion, AnimatePresence }

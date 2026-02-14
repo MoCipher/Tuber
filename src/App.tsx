@@ -3,6 +3,9 @@ import SearchBar from './components/SearchBar'
 import Player from './components/Player'
 import LoadingScreen from './components/LoadingScreen'
 import Toast from './Toast'
+import WatchLaterList from './components/WatchLaterList'
+import SubscribePanel from './components/SubscribePanel'
+import Recommendations from './components/Recommendations'
 import { addWatchLater } from './lib/watchLater'
 import { motion, AnimatePresence } from './lib/motion'
 
@@ -103,18 +106,18 @@ export default function App(){
             <div style={{marginBottom:8}}><strong>Watch later</strong></div>
             <div className="bg-white rounded-md shadow-sm">
               {/* WatchLaterList reads localStorage directly so it stays simple */}
-              {React.createElement(require('./components/WatchLaterList').default, { onPlay: onPlayId })}
+              <WatchLaterList onPlay={onPlayId} />
             </div>
           </div>
 
           <div style={{marginTop:16}}>
             <div style={{marginBottom:8}}><strong>Subscriptions</strong></div>
-            {React.createElement(require('./components/SubscribePanel').default)}
+            <SubscribePanel />
           </div>
 
           <div style={{marginTop:16}}>
             <div style={{marginBottom:8}}><strong>Recommendations</strong></div>
-            {React.createElement(require('./components/Recommendations').default, { onPick: (q:string)=> doSearch(q) })}
+            <Recommendations onPick={(q: string) => doSearch(q)} />
           </div>
         </div>
       </div>
