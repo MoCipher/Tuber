@@ -25,10 +25,11 @@ describe('UI snapshots / regression checks (static golden snippets)', () => {
   })
 
   it('SubscribePanel golden markup contains subscription controls', () => {
-    const html = `<div class="subscribe-panel"><input placeholder="channel id or handle"/><button>Subscribe</button><div class="subs"><div class="sub">Channel One<button>Recommend</button><button>Remove</button></div></div></div>`
+    const html = `<div class="subscribe-panel"><input placeholder="channel id or handle"/><button>Subscribe</button><div class="actions"><button>Remove missing</button></div><div class="subs"><div class="sub">Channel One<button>Recommend</button><button>Remove</button></div></div></div>`
     expect(html).to.contain('Subscribe')
     expect(html).to.contain('Recommend')
     expect(html).to.contain('Remove')
+    expect(html).to.contain('Remove missing')
   })
 
   it('Recommendations golden markup renders keyword chips', () => {
