@@ -7,6 +7,7 @@ import WatchLaterList from './components/WatchLaterList'
 import SubscribePanel from './components/SubscribePanel'
 import Recommendations from './components/Recommendations'
 import { addWatchLater } from './lib/watchLater'
+import { isNegative, setNegative } from './lib/negativeCache'
 import { motion, AnimatePresence } from './lib/motion'
 
 export default function App(){
@@ -41,8 +42,16 @@ export default function App(){
     }
 
     try{
-      const subs = (await import('./lib/subscriptions')).getSubscriptions()
+      let subs = (await import('./lib/subscriptions')).getSubscriptions()
       if(!subs || subs.length===0){ setSubsVideos([]); return }
+
+      // remove subscriptions that are known-missing (negative cache) to avoid repeated 404s
+      const cleaned = subs.filter(s => !isNegative(String(s.value)))
+      if(cleaned.length !== subs.length){
+        try{ localStorage.setItem('subscriptions:v1', JSON.stringify(cleaned)); window.dispatchEvent(new CustomEvent('subscriptions:changed', { detail: cleaned })); }catch(e){}
+        subs = cleaned
+      }
+
       const all: any[] = []
 
       // avoid duplicate network requests for identical subscription values
@@ -55,6 +64,12 @@ export default function App(){
 
         const val = normalized
         try{
+          // Skip network lookup if we've recently seen this subscription return "no feed" (negative cache).
+          if(isNegative(String(val))){
+            try{ window.dispatchEvent(new CustomEvent('subscription:feedStatus', { detail: { value: String(s.value), ok: false, cached: true } })) }catch(e){}
+            continue
+          }
+
           // If the identifier *looks like* a channel ID (starts with UC...) try the channel feed first.
           // For other identifiers (handles, usernames, URLs) try the user/feed only — do not fall back to channel_id to avoid noisy 404s.
           let res: Response | null = null
@@ -77,6 +92,8 @@ export default function App(){
           }
 
           if(!res.ok){
+            // negative cache this missing subscription so we don't repeatedly hit the server
+            try{ setNegative(String(val)) }catch(e){}
             // signal that this subscription had no feed available
             try{ window.dispatchEvent(new CustomEvent('subscription:feedStatus', { detail: { value: String(s.value), ok: false } })) }catch(e){}
             continue
@@ -158,6 +175,10 @@ export default function App(){
                           >
                             <div className="relative rounded-md overflow-hidden">
                               <img src={r.thumbnail} className="w-full h-28 object-cover rounded-md" />
+
+                              {/* prominent play overlay for better UX */}
+                              <button className="play-btn" aria-label={`Play ${r.title || ''}`} onClick={()=> onPlayId(r.id)}>▶</button>
+
                               <motion.div
                                 initial={{ opacity: 0 }}
                                 whileHover={{ opacity: 1 }}
@@ -197,6 +218,10 @@ export default function App(){
                         >
                           <div className="relative rounded-md overflow-hidden">
                             <img src={r.thumbnail} className="w-full h-28 object-cover rounded-md" />
+
+                            {/* prominent play overlay for better UX */}
+                            <button className="play-btn" aria-label={`Play ${r.title || ''}`} onClick={()=> onPlayId(r.id)}>▶</button>
+
                             <motion.div
                               initial={{ opacity: 0 }}
                               whileHover={{ opacity: 1 }}
