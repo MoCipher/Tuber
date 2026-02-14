@@ -44,12 +44,19 @@ export default function App(){
       const subs = (await import('./lib/subscriptions')).getSubscriptions()
       if(!subs || subs.length===0){ setSubsVideos([]); return }
       const all: any[] = []
+
+      // avoid duplicate network requests for identical subscription values
+      const seenValues = new Set<string>()
       for(const s of subs.slice(0,20)){
         const raw = s.value
-        const val = normalize(raw) || raw
+        const normalized = normalize(raw) || raw
+        if(seenValues.has(String(normalized))) continue
+        seenValues.add(String(normalized))
+
+        const val = normalized
         try{
           // If the identifier *looks like* a channel ID (starts with UC...) try the channel feed first.
-          // For other identifiers (handles, usernames, URLs) try the user/feed fallback first to avoid noisy 404s.
+          // For other identifiers (handles, usernames, URLs) try the user/feed only — do not fall back to channel_id to avoid noisy 404s.
           let res: Response | null = null
           const looksLikeChannelId = /^UC[\w-]{22,}$/.test(String(val))
 
@@ -57,8 +64,8 @@ export default function App(){
             res = await fetch(`/api/feed?channel_id=${encodeURIComponent(val)}`)
             if(!res.ok) res = await fetch(`/api/feed?user=${encodeURIComponent(val)}`)
           } else {
+            // try user/handle form only for non-UC identifiers
             res = await fetch(`/api/feed?user=${encodeURIComponent(val)}`)
-            if(!res.ok) res = await fetch(`/api/feed?channel_id=${encodeURIComponent(val)}`)
           }
 
           // fallback: if feed not found try discover (may return a feed)
