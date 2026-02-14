@@ -8,8 +8,8 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Optional polyfills for older mobile browsers (loaded conditionally by UA) -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=default,fetch,Array.prototype.includes,Object.assign,Element.prototype.closest,IntersectionObserver" defer></script>
+    <!-- Optional polyfills for older mobile browsers (vendored locally to avoid external CDN failures) -->
+    <script src="/polyfills.js" defer></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

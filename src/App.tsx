@@ -27,22 +27,62 @@ export default function App(){
   },[])
 
   async function loadSubscriptionsFeeds(){
+    // normalize subscription values that may be full URLs (e.g. /c/name, /@handle)
+    const normalize = (v: string | undefined) => {
+      if(!v) return v
+      try{
+        if(String(v).startsWith('http') || String(v).includes('/')){
+          const u = new URL(String(v))
+          const parts = u.pathname.split('/').filter(Boolean)
+          if(parts.length) return parts[parts.length-1]
+        }
+      }catch(e){ const parts = String(v).split('/').filter(Boolean); if(parts.length) return parts[parts.length-1] }
+      return v
+    }
+
     try{
       const subs = (await import('./lib/subscriptions')).getSubscriptions()
       if(!subs || subs.length===0){ setSubsVideos([]); return }
       const all: any[] = []
       for(const s of subs.slice(0,20)){
+        const raw = s.value
+        const val = normalize(raw) || raw
         try{
-          // try channel_id first, then user fallback
-          let res = await fetch(`/api/feed?channel_id=${encodeURIComponent(s.value)}`)
-          if(!res.ok){ res = await fetch(`/api/feed?user=${encodeURIComponent(s.value)}`) }
-          if(!res.ok) continue
+          // If the identifier *looks like* a channel ID (starts with UC...) try the channel feed first.
+          // For other identifiers (handles, usernames, URLs) try the user/feed fallback first to avoid noisy 404s.
+          let res: Response | null = null
+          const looksLikeChannelId = /^UC[\w-]{22,}$/.test(String(val))
+
+          if (looksLikeChannelId) {
+            res = await fetch(`/api/feed?channel_id=${encodeURIComponent(val)}`)
+            if(!res.ok) res = await fetch(`/api/feed?user=${encodeURIComponent(val)}`)
+          } else {
+            res = await fetch(`/api/feed?user=${encodeURIComponent(val)}`)
+            if(!res.ok) res = await fetch(`/api/feed?channel_id=${encodeURIComponent(val)}`)
+          }
+
+          // fallback: if feed not found try discover (may return a feed)
+          if(!res.ok){
+            try{
+              const d = await fetch(`/api/discover?q=${encodeURIComponent(val)}&aggressive=1`)
+              if(d.ok){ const dj = await d.json(); if(dj && dj.type === 'feed' && dj.feed) { const out = { feed: dj.feed }; res = { ok: true, json: async ()=> out } as unknown as Response } }
+            }catch(e){}
+          }
+
+          if(!res.ok){
+            // signal that this subscription had no feed available
+            try{ window.dispatchEvent(new CustomEvent('subscription:feedStatus', { detail: { value: String(s.value), ok: false } })) }catch(e){}
+            continue
+          }
+
           const j = await res.json()
           const feed = j.feed || j
+          // signal success so UI can show subscription is valid
+          try{ window.dispatchEvent(new CustomEvent('subscription:feedStatus', { detail: { value: String(s.value), ok: true, title: feed.title || s.title } })) }catch(e){}
           const entries = Array.isArray(feed.entry) ? feed.entry : (feed.entry? [feed.entry] : [])
-          const parsed = entries.map((e:any)=>({ id: e['yt:videoId'] || (e.id && e.id.split(':').pop()), title: e.title, thumbnail: (e['media:group'] && e['media:group']['media:thumbnail'] && e['media:group']['media:thumbnail']['@_url']) || '', channelTitle: feed.title || s.title || s.value, published: e.published }))
+          const parsed = entries.map((e:any)=>({ id: e['yt:videoId'] || (e.id && e.id.split(':').pop()), title: e.title, thumbnail: (e['media:group'] && e['media:group']['media:thumbnail'] && e['media:group']['media:thumbnail']['@_url']) || '', channelTitle: feed.title || s.title || val, published: e.published }))
           all.push(...parsed)
-        }catch(err){ console.debug('subscriptions feed fetch failed for', s.value, err && err.message) }
+        }catch(err){ console.debug('subscriptions feed fetch failed for', s.value, err && err.message); try{ window.dispatchEvent(new CustomEvent('subscription:feedStatus', { detail: { value: String(s.value), ok: false } })) }catch(e){} }
       }
       // dedupe by id and sort by published descending
       const map = new Map()
