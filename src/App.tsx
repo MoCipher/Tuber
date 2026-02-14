@@ -12,14 +12,45 @@ import { motion, AnimatePresence } from './lib/motion'
 export default function App(){
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
+  const [subsVideos, setSubsVideos] = useState<any[]>([])
   const [current, setCurrent] = useState<any | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(()=>{
-    // nothing to do yet — storage-backed helpers handle persistence
+    // load subscriptions' latest uploads on mount
+    loadSubscriptionsFeeds()
+    const onSubsChange = ()=> loadSubscriptionsFeeds()
+    window.addEventListener('subscriptions:changed', onSubsChange)
+    return ()=> window.removeEventListener('subscriptions:changed', onSubsChange)
   },[])
+
+  async function loadSubscriptionsFeeds(){
+    try{
+      const subs = (await import('./lib/subscriptions')).getSubscriptions()
+      if(!subs || subs.length===0){ setSubsVideos([]); return }
+      const all: any[] = []
+      for(const s of subs.slice(0,20)){
+        try{
+          // try channel_id first, then user fallback
+          let res = await fetch(`/api/feed?channel_id=${encodeURIComponent(s.value)}`)
+          if(!res.ok){ res = await fetch(`/api/feed?user=${encodeURIComponent(s.value)}`) }
+          if(!res.ok) continue
+          const j = await res.json()
+          const feed = j.feed || j
+          const entries = Array.isArray(feed.entry) ? feed.entry : (feed.entry? [feed.entry] : [])
+          const parsed = entries.map((e:any)=>({ id: e['yt:videoId'] || (e.id && e.id.split(':').pop()), title: e.title, thumbnail: (e['media:group'] && e['media:group']['media:thumbnail'] && e['media:group']['media:thumbnail']['@_url']) || '', channelTitle: feed.title || s.title || s.value, published: e.published }))
+          all.push(...parsed)
+        }catch(err){ console.debug('subscriptions feed fetch failed for', s.value, err && err.message) }
+      }
+      // dedupe by id and sort by published descending
+      const map = new Map()
+      for(const a of all){ if(a.id && !map.has(a.id)) map.set(a.id, a) }
+      const sorted = Array.from(map.values()).sort((a:any,b:any)=> new Date(b.published).getTime() - new Date(a.published).getTime())
+      setSubsVideos(sorted)
+    }catch(e){ console.error('loadSubscriptionsFeeds', e); setSubsVideos([]) }
+  }
 
   async function doSearch(q: string){
     setError(null)
@@ -59,43 +90,87 @@ export default function App(){
                   </motion.div>
                 )}
 
-                <motion.div layout className="grid grid-cols-2 gap-3">
-                  <AnimatePresence initial={false}>
-                    {results.map(r=> (
-                      <motion.div
-                        key={r.id}
-                        layout
-                        initial={{opacity:0, y:6}}
-                        animate={{opacity:1, y:0}}
-                        exit={{opacity:0, y:-6}}
-                        whileHover={{ scale: 1.02 }}
-                        transition={{type:'spring', stiffness:400, damping:28}}
-                        className="relative p-3 bg-white rounded-lg shadow-sm overflow-hidden"
-                      >
-                        <div className="relative rounded-md overflow-hidden">
-                          <img src={r.thumbnail} className="w-full h-28 object-cover rounded-md" />
+                {/* If the user has active subscriptions and no search results, show subscription feed */}
+                {results.length === 0 && subsVideos.length > 0 ? (
+                  <div>
+                    <div style={{marginBottom:12, fontWeight:700}}>Subscriptions</div>
+                    <motion.div layout className="grid grid-cols-2 gap-3">
+                      <AnimatePresence initial={false}>
+                        {subsVideos.map(r=> (
                           <motion.div
-                            initial={{ opacity: 0 }}
-                            whileHover={{ opacity: 1 }}
-                            animate={{ opacity: 0 }}
-                            transition={{ duration: 0.18 }}
-                            className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3"
-                            aria-hidden
+                            key={r.id}
+                            layout
+                            initial={{opacity:0, y:6}}
+                            animate={{opacity:1, y:0}}
+                            exit={{opacity:0, y:-6}}
+                            whileHover={{ scale: 1.02 }}
+                            transition={{type:'spring', stiffness:400, damping:28}}
+                            className="relative p-3 bg-white rounded-lg shadow-sm overflow-hidden"
                           >
-                            <motion.button whileTap={{ scale: 0.96 }} className="px-3 py-1 bg-white text-sm rounded" onClick={()=> onPlayId(r.id)}>Play</motion.button>
-                            <motion.button whileTap={{ scale: 0.96 }} className="px-3 py-1 bg-gray-100 text-sm rounded" onClick={()=>{ addWatchLater({ id: r.id, title: r.title, thumbnail: r.thumbnail }); setResults(rs=>[...rs]) }}>Watch Later</motion.button>
-                          </motion.div>
-                        </div>
+                            <div className="relative rounded-md overflow-hidden">
+                              <img src={r.thumbnail} className="w-full h-28 object-cover rounded-md" />
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                whileHover={{ opacity: 1 }}
+                                animate={{ opacity: 0 }}
+                                transition={{ duration: 0.18 }}
+                                className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3"
+                                aria-hidden
+                              >
+                                <motion.button whileTap={{ scale: 0.96 }} className="px-3 py-1 bg-white text-sm rounded" onClick={()=> onPlayId(r.id)}>Play</motion.button>
+                                <motion.button whileTap={{ scale: 0.96 }} className="px-3 py-1 bg-gray-100 text-sm rounded" onClick={()=>{ addWatchLater({ id: r.id, title: r.title, thumbnail: r.thumbnail }); setSubsVideos(sv=>[...sv]) }}>Watch Later</motion.button>
+                              </motion.div>
+                            </div>
 
-                        <div className="mt-3 font-semibold truncate">{r.title}</div>
-                        <div className="flex gap-2 mt-3 opacity-0 hover:opacity-100 transition-opacity duration-150">
-                          <button className="small" onClick={()=> onPlayId(r.id) }>Play</button>
-                          <button className="small" onClick={()=>{ addWatchLater({ id: r.id, title: r.title, thumbnail: r.thumbnail }); setResults(rs=>[...rs]) }}>Watch Later</button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </motion.div>
+                            <div className="mt-3 font-semibold truncate">{r.title}</div>
+                            <div className="flex gap-2 mt-3 opacity-0 hover:opacity-100 transition-opacity duration-150">
+                              <button className="small" onClick={()=> onPlayId(r.id) }>Play</button>
+                              <button className="small" onClick={()=>{ addWatchLater({ id: r.id, title: r.title, thumbnail: r.thumbnail }); setSubsVideos(sv=>[...sv]) }}>Watch Later</button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </motion.div>
+                  </div>
+                ) : (
+                  <motion.div layout className="grid grid-cols-2 gap-3">
+                    <AnimatePresence initial={false}>
+                      {results.map(r=> (
+                        <motion.div
+                          key={r.id}
+                          layout
+                          initial={{opacity:0, y:6}}
+                          animate={{opacity:1, y:0}}
+                          exit={{opacity:0, y:-6}}
+                          whileHover={{ scale: 1.02 }}
+                          transition={{type:'spring', stiffness:400, damping:28}}
+                          className="relative p-3 bg-white rounded-lg shadow-sm overflow-hidden"
+                        >
+                          <div className="relative rounded-md overflow-hidden">
+                            <img src={r.thumbnail} className="w-full h-28 object-cover rounded-md" />
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              whileHover={{ opacity: 1 }}
+                              animate={{ opacity: 0 }}
+                              transition={{ duration: 0.18 }}
+                              className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3"
+                              aria-hidden
+                            >
+                              <motion.button whileTap={{ scale: 0.96 }} className="px-3 py-1 bg-white text-sm rounded" onClick={()=> onPlayId(r.id)}>Play</motion.button>
+                              <motion.button whileTap={{ scale: 0.96 }} className="px-3 py-1 bg-gray-100 text-sm rounded" onClick={()=>{ addWatchLater({ id: r.id, title: r.title, thumbnail: r.thumbnail }); setResults(rs=>[...rs]) }}>Watch Later</motion.button>
+                            </motion.div>
+                          </div>
+
+                          <div className="mt-3 font-semibold truncate">{r.title}</div>
+                          <div className="flex gap-2 mt-3 opacity-0 hover:opacity-100 transition-opacity duration-150">
+                            <button className="small" onClick={()=> onPlayId(r.id) }>Play</button>
+                            <button className="small" onClick={()=>{ addWatchLater({ id: r.id, title: r.title, thumbnail: r.thumbnail }); setResults(rs=>[...rs]) }}>Watch Later</button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
               </>
             )}
           </div>

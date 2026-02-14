@@ -17,9 +17,11 @@ export default function SubscribePanel(){
     const next = addSubscription({ value: input, title: input, recommend: true })
     setSubs(next)
     setInput('')
+    // notify app-level listeners (same-window consumers)
+    try{ window.dispatchEvent(new CustomEvent('subscriptions:changed', { detail: next })) }catch(e){}
   }
-  function rem(v:string){ setSubs(removeSubscription(v)) }
-  function toggle(v:string){ setSubs(toggleRecommend(v)) }
+  function rem(v:string){ const next = removeSubscription(v); setSubs(next); try{ window.dispatchEvent(new CustomEvent('subscriptions:changed', { detail: next })) }catch(e){} }
+  function toggle(v:string){ const next = toggleRecommend(v); setSubs(next); try{ window.dispatchEvent(new CustomEvent('subscriptions:changed', { detail: next })) }catch(e){} }
 
   return (
     <motion.div className="p-3 bg-white rounded-md shadow-sm" initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}>
