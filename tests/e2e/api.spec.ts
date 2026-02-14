@@ -154,3 +154,40 @@ test('E2E: subscribe -> subscription feed', async ({ page }) => {
   // main UI should show recent uploads from that subscription
   await expect(page.locator('text=Discover video 1')).toBeVisible()
 })
+
+// E2E: strict privacy per-video override
+test('E2E: strict privacy per-video override', async ({ page }) => {
+  const api = await request.newContext({ baseURL: `http://localhost:${process.env.TEST_API_PORT || 4001}` })
+  const fixture = require('../../server/test/fixtures/search-cats.json')
+  await api.post('/api/__fixtures', { data: { type: 'search', q: 'cats', response: fixture } })
+
+  // set per-video strict override for vid-cat-1 (no global strict flag)
+  await page.addInitScript(() => {
+    try { localStorage.removeItem('privacy:strict') } catch(e) {}
+    try { localStorage.setItem('privacy:override:vid-cat-1', '1') } catch(e) {}
+  })
+
+  await page.goto('/')
+  await page.fill('input[aria-label="Search"]', 'cats')
+  await page.keyboard.press('Enter')
+  await page.waitForSelector('.grid')
+
+  // play the first result and assert iframe is sandboxed
+  await page.click('.grid >> text=Play')
+  await page.waitForSelector('iframe')
+  const sandboxAttr = await page.locator('iframe').getAttribute('sandbox')
+  expect(sandboxAttr).toBeTruthy()
+
+  // disable strict privacy for this video (button removes per-video override + reload)
+  await page.click('text=Disable for this video')
+  await page.waitForLoadState('domcontentloaded')
+
+  // re-run the UI flow and verify iframe no longer has sandbox attribute
+  await page.fill('input[aria-label="Search"]', 'cats')
+  await page.keyboard.press('Enter')
+  await page.waitForSelector('.grid')
+  await page.click('.grid >> text=Play')
+  await page.waitForSelector('iframe')
+  const sandboxAfter = await page.locator('iframe').getAttribute('sandbox')
+  expect(sandboxAfter).toBeNull()
+})

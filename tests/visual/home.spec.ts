@@ -117,3 +117,9 @@ test('player controls snapshot (static)', async ({ page }) => {
   const player = page.locator('iframe')
   await expect(player).toHaveScreenshot('player-controls.png')
 })
+
+test('index includes optional polyfill script', async ({ page }) => {
+  await page.goto('/')
+  const poly = await page.locator('script[src*="polyfill.io"]')
+  await expect(poly).toHaveCount(1)
+})
