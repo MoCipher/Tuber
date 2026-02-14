@@ -14,7 +14,13 @@ Run locally
 Notes
 - This is a local, client-side-only app; subscriptions and saved videos are stored in browser `localStorage`.
 - For user/custom channel URLs that don't expose channel ID, try entering the channel's username or channel ID (starts with `UC`).
-- You may see console warnings from embedded YouTube players (ads, Content-Security-Policy messages, or unreachable code warnings). These come from YouTube/ads third-party scripts and are expected when embedding videos. Enable **Privacy** mode in the app (uses `youtube-nocookie.com`) to reduce tracking and some third-party ad scripts; note that some warnings are outside the app's control.
+- You may see console warnings from embedded YouTube players (ads, Content-Security-Policy messages, partitioned-cookie notices, or "unreachable code" logged by third‑party scripts). These are emitted by external providers (YouTube / ad networks) and usually harmless. To reduce exposure and noisy logs:
+  - Use **Privacy** mode (uses `youtube-nocookie.com`) or enable the **Strict privacy** option in the Privacy modal (sandboxes the iframe; may limit autoplay or some playback features).
+  - Use the app's click‑to‑load player so iframes only load after user interaction.
+  - If you need quieter dev logs, filter known third‑party warnings in your browser console (don't suppress errors in production).
+
+Compatibility notes:
+- The app targets modern (evergreen) browsers and recent mobile webviews. It’s tested against recent Chrome/Edge/Firefox and iOS/Android webviews. Some warnings above are caused by third‑party embeds and cannot be fully removed by the app.
 - The Vite connecting/connected messages and the React DevTools suggestion are normal dev-time messages and not errors.
 - If you see console messages about Content-Security-Policy, unreachable code, or cross-origin requests related to embedded YouTube players (ads and tracking), that originates from YouTube's third-party scripts. Use the **Privacy** toggle in the app to use the `youtube-nocookie` embed which reduces some of these scripts and tracking; however, some warnings are expected and come from external providers (ads/doubleclick) and cannot be fully silenced by the app.
 
