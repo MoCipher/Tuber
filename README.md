@@ -23,3 +23,27 @@ Features you may want to try
 - Use **Mark all as seen** to clear "New" badges, or **Clear seen** to reset.
 - Export/import subscriptions with the buttons next to the controls.
 
+## Local development (dev & tests)
+
+- Dev servers
+  - Backend API (fixtures): `TEST_FIXTURES=1 PORT=4001 npm run server` — serves test fixtures and dev-only debug endpoints.
+  - Frontend (Vite): `npm run dev` — serves app at `http://localhost:5173` and proxies `/api` → `http://localhost:4001` (see `vite.config.ts`).
+
+- Tests
+  - Unit tests: `npm test`
+  - Playwright (visual + E2E): `npm run test:visual`
+  - Update visual GOLDENs: `npm run test:visual:update`
+
+- Useful debug endpoints (available when `TEST_FIXTURES=1`)
+  - `POST /api/__fixtures` — install server fixtures for deterministic E2E
+  - `POST /api/debug/backoff/set` and `/api/debug/backoff/clear` — control discover backoff (test-only)
+  - `GET /api/debug/backoff` — inspect backoff state
+
+- Troubleshooting
+  - "Uncaught ReferenceError: require is not defined" in browser → remove Vite cache and restart: `rm -rf node_modules/.vite && npm run dev`.
+  - UI cannot reach API → confirm backend is running on port **4001** and Vite proxy (`vite.config.ts`) is present.
+
+- Notes
+  - Playwright global-setup will reuse a healthy API server on `TEST_API_PORT` (defaults to `4001`) to avoid spawn races.
+  - Legacy React `.jsx` files and the `/archive/legacy-react-backup` folder were removed in recent cleanup PRs (#1, #3).
+
