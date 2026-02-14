@@ -37,4 +37,20 @@ describe('GET /api/feed', ()=>{
     expect(res.status).to.equal(404)
     expect(res.body.error).to.match(/No feed found/)
   })
+
+  it('accepts full YouTube channel URL in channel_id and normalizes it', async ()=>{
+    stub = sinon.stub(axios, 'get').resolves({ data: sampleXml })
+    const res = await request(app).get('/api/feed').query({ channel_id: 'https://www.youtube.com/channel/UCABC' })
+    expect(res.status).to.equal(200)
+    expect(res.body.feed).to.exist
+    expect(res.body.feed.title).to.equal('Test Channel')
+  })
+
+  it('accepts full channel/user URL in user and normalizes it', async ()=>{
+    stub = sinon.stub(axios, 'get').resolves({ data: sampleXml })
+    const res = await request(app).get('/api/feed').query({ user: 'https://www.youtube.com/c/misaha' })
+    expect(res.status).to.equal(200)
+    expect(res.body.feed).to.exist
+    expect(res.body.feed.title).to.equal('Test Channel')
+  })
 })
