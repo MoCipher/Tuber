@@ -1,0 +1,26 @@
+name: Publish Cloudflare Worker
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run build
+      - name: Publish to Cloudflare Workers (requires CF_API_TOKEN secret)
+        if: ${{ secrets.CF_API_TOKEN }}
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: npx wrangler publish --env production
+
+      - name: CF token missing (skipped publish)
+        if: ${{ !secrets.CF_API_TOKEN }}
+        run: echo "CF_API_TOKEN secret not set — skipping publish. Add repository secret 'CF_API_TOKEN' to enable deployments."

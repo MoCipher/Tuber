@@ -1,0 +1,12 @@
+export function loadJSON<T>(key: string, fallback: T): T {
+  try {
+    const v = localStorage.getItem(key)
+    return v ? JSON.parse(v) as T : fallback
+  } catch (e) {
+    return fallback
+  }
+}
+
+export function saveJSON(key: string, value: any) {
+  try { localStorage.setItem(key, JSON.stringify(value)) } catch (e) { }
+}

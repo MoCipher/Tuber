@@ -1,0 +1,20 @@
+name: Visual tests (Playwright)
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run visual tests
+        run: npm run test:visual

@@ -1,0 +1,11 @@
+{
+  "type": "feed",
+  "id": "UCABC",
+  "feed": {
+    "title": "Discovered Channel",
+    "entry": [
+      { "title": "Discover video 1", "yt:videoId": "vid-disc-1", "media:group": { "media:thumbnail": { "@_url": "/placeholder.jpg" } } }
+    ]
+  },
+  "confidence": 0.9
+}

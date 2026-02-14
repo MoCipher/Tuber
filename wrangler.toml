@@ -1,0 +1,10 @@
+name = "tuber-worker"
+main = "server/worker.ts"
+type = "javascript"
+compatibility_date = "2026-02-13"
+# Set `account_id` when deploying or via your environment/CI secrets
+# account_id = ""
+
+# Worker-specific environment vars can be set here or injected by CI
+[vars]
+NODE_ENV = "production"
