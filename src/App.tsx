@@ -90,8 +90,10 @@ export default function App(){
                   </motion.div>
                 )}
 
-                {/* If the user has active subscriptions and no search results, show subscription feed */}
-                {results.length === 0 && subsVideos.length > 0 ? (
+                {/* Show a search-banner for empty queries/results, otherwise prefer subscriptions when present */}
+                {results.length === 0 && query ? (
+                  <div className="search-banner" role="status" aria-live="polite">No results found</div>
+                ) : results.length === 0 && subsVideos.length > 0 ? (
                   <div>
                     <div style={{marginBottom:12, fontWeight:700}}>Subscriptions</div>
                     <motion.div layout className="grid grid-cols-2 gap-3">

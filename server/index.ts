@@ -50,10 +50,36 @@ async function tryFeed(url: string){
 app.get('/api/health', (_req, res) => res.json({ ok: true }))
 
 app.get('/api/feed', async (req, res) => {
-  const channelId = req.query.channel_id as string | undefined
-  const user = req.query.user as string | undefined
+  let channelId = req.query.channel_id as string | undefined
+  let user = req.query.user as string | undefined
+
+  // Normalize URL-like inputs so callers may pass full channel/user URLs.
+  // Examples handled: https://www.youtube.com/channel/UC... | /c/name | /@handle | raw username
+  function normalizeIdentifier(v?: string){
+    if(!v) return v
+    try{
+      if(String(v).startsWith('http') || String(v).includes('/')){
+        const u = new URL(String(v))
+        const parts = u.pathname.split('/').filter(Boolean)
+        if(parts.length) return parts[parts.length-1]
+      }
+    }catch(e){
+      const parts = String(v).split('/').filter(Boolean)
+      if(parts.length) return parts[parts.length-1]
+    }
+    return v
+  }
+  channelId = normalizeIdentifier(channelId)
+  user = normalizeIdentifier(user)
+
   if(!channelId && !user) return res.status(400).json({error:'channel_id or user is required'})
   try{
+    // TEST FIXTURES: allow tests to stub feeds directly
+    if(process.env.TEST_FIXTURES === '1'){
+      if(channelId){ const stored = TEST_FIXTURE_STORE[`feed:${channelId}`]; if(stored) return res.json(stored) }
+      if(user){ const stored = TEST_FIXTURE_STORE[`feed:${user}`]; if(stored) return res.json(stored) }
+    }
+
     if(channelId){
       const asChannel = await tryFeed(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`)
       if(asChannel.ok) return res.json(asChannel.json)
@@ -153,17 +179,17 @@ app.get('/api/discover', async (req, res) => {
   const aggressive = String(req.query.aggressive || '').toLowerCase() === '1' || String(req.query.aggressive || '').toLowerCase() === 'true'
   if(!q) return res.status(400).json({ error: 'query is required' })
 
-  // TEST fixtures override
-  if(process.env.TEST_FIXTURES === '1'){
-    const stored = TEST_FIXTURE_STORE[`discover:${q}`]
-    if(stored) return res.json(stored)
-  }
-
   const backoffKey = `discover:${q}`
   const remaining = getBackoffRemainingMs(backoffKey)
   if(remaining > 0 && !aggressive){
     // honor explicit backoff even if a cached discovery exists
     return res.status(429).json({ error: 'backoff', retryAfterMs: Math.ceil(remaining) })
+  }
+
+  // TEST fixtures override (only after honoring backoff)
+  if(process.env.TEST_FIXTURES === '1'){
+    const stored = TEST_FIXTURE_STORE[`discover:${q}`]
+    if(stored) return res.json(stored)
   }
 
   const cacheKey = `discover:${q}`
@@ -353,6 +379,38 @@ app.post('/api/debug/backoff/set', (req, res) => {
   return res.json({ ok: true, key, failures: Number(failures) })
 })
 console.debug('[routes] /api/debug/backoff/set registered (dev-only)')
+
+// Test-only: install / inspect server fixtures when TEST_FIXTURES=1
+app.post('/api/__fixtures', (req, res) => {
+  if(process.env.NODE_ENV === 'production') return res.status(404).json({ error: 'not found' })
+  if(!process.env.TEST_FIXTURES) return res.status(404).json({ error: 'not available' })
+  const { type, q, response } = req.body || {}
+  if(!type || typeof q === 'undefined') return res.status(400).json({ error: 'type and q required' })
+  const key = `${String(type)}:${String(q)}`
+  TEST_FIXTURE_STORE[key] = response
+
+  // If the fixture contains a feed (discover -> { type:'feed', id, feed }), also register it
+  // so /api/feed?channel_id=<id> will return deterministic data in TEST_FIXTURES mode.
+  try{
+    if(response && response.type === 'feed' && response.id){
+      TEST_FIXTURE_STORE[`feed:${String(response.id)}`] = response.feed || response
+    }
+  }catch(e){}
+
+  // clear any cached entries so fixture takes effect immediately
+  cache.delete(`search:${q}`)
+  cache.delete(`discover:${q}`)
+  cache.delete(`feed:${q}`)
+  setCache(`${type}:${q}`, response, 5 * 60 * 1000)
+  console.debug('[__fixtures] set', key)
+  return res.json({ ok: true, key })
+})
+
+app.get('/api/__fixtures', (req, res) => {
+  if(process.env.NODE_ENV === 'production') return res.status(404).json({ error: 'not found' })
+  if(!process.env.TEST_FIXTURES) return res.status(404).json({ error: 'not available' })
+  return res.json({ fixtures: TEST_FIXTURE_STORE })
+})
 
 app.get('/api/similar', async (req, res) => {
   const subsParam = req.query.subs

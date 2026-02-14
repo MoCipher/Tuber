@@ -133,3 +133,24 @@ test('E2E: discover -> none fixture (server + UI fallback)', async ({ page }) =>
   await page.waitForSelector('.search-banner')
   await expect(page.locator('.search-banner')).toContainText('No results found')
 })
+
+// E2E: subscribe -> subscription feed (resolves canonical id via discover)
+test('E2E: subscribe -> subscription feed', async ({ page }) => {
+  const api = await request.newContext({ baseURL: `http://localhost:${process.env.TEST_API_PORT || 4001}` })
+  const fixture = require('../../server/test/fixtures/discover-feed.json')
+
+  // ensure server returns a discovered feed for 'dogs'
+  await api.post('/api/__fixtures', { data: { type: 'discover', q: 'dogs', response: fixture } })
+
+  await page.goto('/')
+  // add subscription via the SubscribePanel input
+  await page.fill('input[aria-label="Add subscription"]', 'dogs')
+  await page.click('button:has-text("Subscribe")')
+
+  // subscription should appear in the side panel (title from fixture)
+  await page.waitForSelector('text=Discovered Channel')
+  await expect(page.locator('.space-y-2')).toContainText('Discovered Channel')
+
+  // main UI should show recent uploads from that subscription
+  await expect(page.locator('text=Discover video 1')).toBeVisible()
+})
