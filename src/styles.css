@@ -156,8 +156,15 @@ button:focus, input:focus, .sub-btn:focus{outline:3px solid rgba(124,97,255,0.15
 /* click-to-load placeholder */
 .play-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#000;border-radius:8px;overflow:hidden}
 .play-placeholder img{width:100%;height:100%;object-fit:cover;filter:brightness(.36)}
-.play-btn{position:absolute;width:86px;height:86px;border-radius:999px;border:none;background:var(--accent-gradient);color:white;font-size:30px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px rgba(124,97,255,0.18);cursor:pointer}
+.play-btn{position:absolute;width:86px;height:86px;border-radius:999px;border:none;background:var(--accent-gradient);color:white;font-size:30px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px rgba(124,97,255,0.18);cursor:pointer;transform-origin:center;animation:play-pulse 2.2s ease-in-out infinite}
+.play-btn:hover{transform:translateY(-4px) scale(1.02)}
+@keyframes play-pulse{0%{transform:scale(1)}45%{transform:scale(1.02)}100%{transform:scale(1)}}
 .play-caption{position:absolute;bottom:14px;color:white;font-size:13px;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,0.28)}
+
+/* player error specific */
+.player-error{background:linear-gradient(180deg,rgba(196,0,77,0.9),rgba(124,97,255,0.9));padding:12px;border-radius:12px;color:white;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.player-error .actions{display:flex;gap:8px}
+
 
 /* player overlay when playback is blocked or restricted */
 .player-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:12px;background:linear-gradient(180deg, rgba(16,24,40,0.28), rgba(255,255,255,0.02));z-index:40;padding:18px}

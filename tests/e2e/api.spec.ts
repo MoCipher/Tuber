@@ -239,16 +239,8 @@ test('E2E: strict privacy per-video override', async ({ page }) => {
   const sandboxAttr = await page.locator('iframe').getAttribute('sandbox')
   expect(sandboxAttr).toBeTruthy()
 
-  // disable strict privacy for this video (button removes per-video override + reload)
-  await page.click('text=Disable for this video')
-  await page.waitForLoadState('domcontentloaded')
-
-  // re-run the UI flow and verify iframe no longer has sandbox attribute
-  await page.waitForSelector('input[aria-label="Search"]', { timeout: 5000 })
-  await page.fill('input[aria-label="Search"]', 'cats')
-  await page.keyboard.press('Enter')
-  await page.waitForSelector('.grid')
-  await page.click('.grid >> text=Play')
+  // click the new "Load anyway" CTA to bypass strict privacy (should remove sandbox and attempt playback)
+  await page.click('text=Load anyway (reduce privacy)')
   await page.waitForSelector('iframe')
   const sandboxAfter = await page.locator('iframe').getAttribute('sandbox')
   expect(sandboxAfter).toBeNull()
