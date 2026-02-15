@@ -1,9 +1,0 @@
-{
-  "feed": {
-    "title": "Sample Channel Feed",
-    "entry": [
-      { "title": "Channel video A", "yt:videoId": "chan-vid-1", "media:group": { "media:thumbnail": { "@_url": "/placeholder.jpg" } } },
-      { "title": "Channel video B", "yt:videoId": "chan-vid-2", "media:group": { "media:thumbnail": { "@_url": "/placeholder.jpg" } } }
-    ]
-  }
-}

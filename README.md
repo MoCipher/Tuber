@@ -1,55 +1,185 @@
-# Tuber — private YouTube frontend
+# Tuber — Privacy-First YouTube Frontend
 
-Features
-- Subscribe to channels locally (no Google account)
-- Fetch public YouTube RSS feeds via a small CORS proxy
-- Save videos to "Watch Later" (localStorage)
-- Watch videos via YouTube embed
+A beautiful, lightweight YouTube search interface built with pure TypeScript. No frameworks, no bloat — just clean, fast, and privacy-focused.
 
-Run locally
-1. Install deps: `npm install`
-2. Start proxy server: `npm run server` (runs on port 4000)
-3. In another terminal run: `npm run dev` (Vite dev server)
+![Tuber Logo](https://img.shields.io/badge/Tuber-Privacy--First-9333ea?style=for-the-badge&logo=youtube&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Pure](https://img.shields.io/badge/Pure-No%20Frameworks-14b8a6?style=for-the-badge)
 
-Notes
-- This is a local, client-side-only app; subscriptions and saved videos are stored in browser `localStorage`.
-- For user/custom channel URLs that don't expose channel ID, try entering the channel's username or channel ID (starts with `UC`).
-- You may see console warnings from embedded YouTube players (ads, Content-Security-Policy messages, partitioned-cookie notices, or "unreachable code" logged by third‑party scripts). These are emitted by external providers (YouTube / ad networks) and usually harmless. To reduce exposure and noisy logs:
-  - Use **Privacy** mode (uses `youtube-nocookie.com`) or enable the **Strict privacy** option in the Privacy modal (sandboxes the iframe; may limit autoplay or some playback features).
-  - Use the app's click‑to‑load player so iframes only load after user interaction.
-  - If you need quieter dev logs, filter known third‑party warnings in your browser console (don't suppress errors in production).
+## ✨ Features
 
-Compatibility notes:
-- The app targets modern (evergreen) browsers and recent mobile webviews. It’s tested against recent Chrome/Edge/Firefox and iOS/Android webviews. Some warnings above are caused by third‑party embeds and cannot be fully removed by the app.
-- The Vite connecting/connected messages and the React DevTools suggestion are normal dev-time messages and not errors.
-- If you see console messages about Content-Security-Policy, unreachable code, or cross-origin requests related to embedded YouTube players (ads and tracking), that originates from YouTube's third-party scripts. Use the **Privacy** toggle in the app to use the `youtube-nocookie` embed which reduces some of these scripts and tracking; however, some warnings are expected and come from external providers (ads/doubleclick) and cannot be fully silenced by the app.
+- 🔍 **Smart Search**: Search YouTube videos, channels, and playlists
+- 🎨 **Beautiful UI**: Modern design with smooth animations and glassmorphism effects
+- 📱 **Responsive**: Works perfectly on desktop, tablet, and mobile
+- 🚀 **Lightning Fast**: Pure TypeScript with no framework overhead
+- 🔒 **Privacy-Focused**: Direct API calls with no tracking
+- 🎯 **Clean Code**: Minimal dependencies, maximum performance
 
-Features you may want to try
-- Upload a local Lottie JSON via the **Upload Lottie** button in the sidebar (or drop a `src/animations/custom.json` file and the app will auto-use it). This replaces the onboarding animation.
-- Use **Mark all as seen** to clear "New" badges, or **Clear seen** to reset.
-- Export/import subscriptions with the buttons next to the controls.
+## 🚀 Quick Start
 
-## Local development (dev & tests)
+### Prerequisites
+- Node.js 16+
+- npm or yarn
 
-- Dev servers
-  - Backend API (fixtures): `TEST_FIXTURES=1 PORT=4001 npm run server` — serves test fixtures and dev-only debug endpoints.
-  - Frontend (Vite): `npm run dev` — serves app at `http://localhost:5173` and proxies `/api` → `http://localhost:4001` (see `vite.config.ts`).
+### Installation
 
-- Tests
-  - Unit tests: `npm test`
-  - Playwright (visual + E2E): `npm run test:visual`
-  - Update visual GOLDENs: `npm run test:visual:update`
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/tuber.git
+cd tuber
 
-- Useful debug endpoints (available when `TEST_FIXTURES=1`)
-  - `POST /api/__fixtures` — install server fixtures for deterministic E2E
-  - `POST /api/debug/backoff/set` and `/api/debug/backoff/clear` — control discover backoff (test-only)
-  - `GET /api/debug/backoff` — inspect backoff state
+# Install dependencies
+npm install
 
-- Troubleshooting
-  - "Uncaught ReferenceError: require is not defined" in browser → remove Vite cache and restart: `rm -rf node_modules/.vite && npm run dev`.
-  - UI cannot reach API → confirm backend is running on port **4001** and Vite proxy (`vite.config.ts`) is present.
+# Build the application
+npm run build
 
-- Notes
-  - Playwright global-setup will reuse a healthy API server on `TEST_API_PORT` (defaults to `4001`) to avoid spawn races.
-  - Legacy React `.jsx` files and the `/archive/legacy-react-backup` folder were removed in recent cleanup PRs (#1, #3).
+# Start the server
+npm start
+```
+
+Visit `http://localhost:3000` and start searching!
+
+## 🏗️ Architecture
+
+```
+tuber/
+├── src/
+│   ├── main.ts          # Main application logic
+│   └── server.ts        # HTTP server
+├── public/
+│   ├── index.html       # HTML entry point
+│   ├── styles.css       # Complete styling
+│   ├── main.js          # Compiled TypeScript
+│   └── favicon.svg      # App icon
+├── dist/                # Built files
+└── package.json         # Minimal dependencies
+```
+
+### Tech Stack
+- **Frontend**: Pure TypeScript (no frameworks)
+- **Styling**: Custom CSS with modern effects
+- **Server**: Node.js HTTP server
+- **API**: Direct YouTube Data API integration
+- **Build**: TypeScript compiler only
+
+## 🎨 Design Features
+
+- **Gradient Backgrounds**: Animated cosmic gradients
+- **Glassmorphism**: Modern frosted glass effects
+- **Smooth Animations**: CSS transitions and keyframes
+- **Responsive Grid**: Adaptive video result cards
+- **Interactive Elements**: Hover effects and micro-animations
+- **Loading States**: Beautiful spinners and feedback
+
+## 🔧 Development
+
+### Available Scripts
+
+```bash
+npm run build    # Compile TypeScript
+npm start        # Start production server
+```
+
+### Project Structure
+
+- `src/main.ts`: Core application class with state management
+- `src/server.ts`: Static file server
+- `public/styles.css`: Complete CSS styling
+- `public/index.html`: HTML template with critical CSS
+
+### Adding Features
+
+The app is built with pure TypeScript for maximum simplicity:
+
+```typescript
+class TuberApp {
+  private state: AppState;
+
+  constructor() {
+    this.init();
+  }
+
+  private render(): void {
+    // Pure DOM manipulation
+  }
+}
+```
+
+## 🔒 Privacy & Security
+
+- **No Tracking**: Direct API calls only
+- **No Cookies**: Client-side storage only
+- **No Analytics**: Completely private
+- **No Frameworks**: Minimal attack surface
+- **HTTPS Ready**: Can be deployed with SSL
+
+## 📱 Browser Support
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## 🚀 Deployment
+
+### Local Development
+```bash
+npm install
+npm run build
+npm start
+```
+
+### Production Server
+The app serves static files and can be deployed to any web server:
+
+```bash
+# Build for production
+npm run build
+
+# Serve with any static server
+npx serve dist
+# or
+python -m http.server 3000 -d dist
+```
+
+### Docker (Optional)
+```dockerfile
+FROM node:16-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+### Code Style
+- Pure TypeScript (ES2020+)
+- Semantic CSS classes
+- Minimal dependencies
+- Clean, readable code
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ using pure TypeScript
+- Inspired by the need for private YouTube browsing
+- Thanks to the open-source community
+
+---
+
+**Made with pure TypeScript • No frameworks • Maximum performance**
 

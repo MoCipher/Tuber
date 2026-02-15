@@ -3,15 +3,13 @@
     "target": "ES2020",
     "module": "ESNext",
     "lib": ["DOM", "ES2020"],
-    "jsx": "react-jsx",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "strict": false,
-    "allowImportingTsExtensions": true,
+    "strict": true,
     "resolveJsonModule": true,
-    "outDir": "dist"
+    "outDir": "public"
   },
-  "include": ["src", "server"],
-  "exclude": ["node_modules"]
+  "include": ["src/main.ts", "src/lib/**/*"],
+  "exclude": ["node_modules", "dist", "server"]
 }
