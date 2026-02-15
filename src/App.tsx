@@ -6,6 +6,7 @@ import Toast from './Toast'
 import WatchLaterList from './components/WatchLaterList'
 import SubscribePanel from './components/SubscribePanel'
 import Recommendations from './components/Recommendations'
+import ErrorBoundary from './components/ErrorBoundary'
 import { addWatchLater } from './lib/watchLater'
 import { isNegative, setNegative } from './lib/negativeCache'
 import { motion, AnimatePresence } from './lib/motion'
@@ -250,7 +251,9 @@ export default function App(){
           </div>
         </div>
         <div style={{width:420}}>
-          <Player video={current} onSave={(v)=>{ addWatchLater({ id: v.id, title: v.title, thumbnail: v.thumbnail }); setToast('Saved to Watch Later'); setTimeout(()=>setToast(null), 1600) }} />
+          <ErrorBoundary>
+            <Player video={current} onSave={(v)=>{ addWatchLater({ id: v.id, title: v.title, thumbnail: v.thumbnail }); setToast('Saved to Watch Later'); setTimeout(()=>setToast(null), 1600) }} />
+          </ErrorBoundary>
           <div style={{marginTop:16}}>
             <div style={{marginBottom:8}}><strong>Watch later</strong></div>
             <div className="bg-white rounded-md shadow-sm">

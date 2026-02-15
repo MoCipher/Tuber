@@ -125,8 +125,8 @@ export default function Player({ video, onSave }:{ video?: any; onSave?: (v:any)
         {/* player mount point for YT API or fallback */}
         <div ref={playerRef} style={{position:'absolute',inset:0}} />
 
-        {/* show fallback iframe when sandboxed OR when YT API failed to initialize */}
-        {allowSandbox ? renderFallbackIframe() : null}
+        {/* show fallback iframe when sandboxed OR when YT API failed to initialize (error.code === 0 signals API fallback) */}
+        {(allowSandbox || (error && error.code === 0)) ? renderFallbackIframe() : null}
 
         {/* loading spinner */}
         {loading && <div className="player-overlay" role="status"><div className="spinner" aria-hidden></div></div>}
