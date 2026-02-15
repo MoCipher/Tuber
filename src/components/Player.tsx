@@ -24,11 +24,18 @@ function loadYouTubeApi(){
 }
 
 export default function Player({ video, onSave }:{ video?: any; onSave?: (v:any)=>void }){
+  // Hooks must always be called unconditionally and in the same order.
   const [forceUnsafe, setForceUnsafe] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<null | { code: number, msg: string }>(null)
   const playerRef = React.useRef<HTMLDivElement | null>(null)
   const ytPlayerRef = React.useRef<any>(null)
+
+  // compute privacy flags safely (do not call hooks here)
+  const strictGlobal = (()=>{ try{ return typeof localStorage !== 'undefined' && localStorage.getItem('privacy:strict') === '1' }catch(e){ return false } })()
+  const strictPerVideo = (()=>{ try{ return !!video && typeof localStorage !== 'undefined' && localStorage.getItem(`privacy:override:${video.id}`) === '1' }catch(e){ return false } })()
+  const useStrict = strictGlobal || strictPerVideo
+  const allowSandbox = useStrict && !forceUnsafe
 
   if(!video) return (
     <motion.div initial={{opacity:0, y:8}} animate={{opacity:1, y:0}} transition={{duration:0.28}} className="p-5 rounded-lg bg-gradient-to-b from-white to-slate-50 min-h-[260px] flex items-center justify-center">
@@ -38,13 +45,6 @@ export default function Player({ video, onSave }:{ video?: any; onSave?: (v:any)
       </div>
     </motion.div>
   )
-
-  // determine whether strict privacy is enabled for this session or for this video
-  const strictGlobal = (()=>{ try{ return localStorage.getItem('privacy:strict') === '1' }catch(e){ return false } })()
-  const strictPerVideo = (()=>{ try{ return localStorage.getItem(`privacy:override:${video.id}`) === '1' }catch(e){ return false } })()
-  const useStrict = strictGlobal || strictPerVideo
-  const allowSandbox = useStrict && !forceUnsafe
-
   // initialize YT player for better error detection when not sandboxed
   React.useEffect(()=>{
     let mounted = true
@@ -76,7 +76,7 @@ export default function Player({ video, onSave }:{ video?: any; onSave?: (v:any)
               if(code === 2) msg = 'Invalid parameter.'
               else if(code === 5) msg = 'HTML5 player error.'
               else if(code === 100) msg = 'Video not found.'
-              else if(code === 101 || code === 150) msg = 'Embedding disabled by the video owner.'
+              else if(code === 101 || code === 150 || code === 153) msg = 'Embedding disabled by the video owner.'
               else msg = `Playback error (${code})`
               setError({ code, msg })
             }
