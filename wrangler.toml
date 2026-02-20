@@ -1,5 +1,5 @@
 
-name = "tuber-backend"
+name = "tuber"
 account_id = "3335093fd32547addce581d41f67ffb0"
 workers_dev = true
 main = "dist/src/worker.js"
