@@ -881,8 +881,8 @@ class TuberApp {
         this.render();
         try {
             console.log('Attempting API call...');
-            // The localhost fallback has been removed. This file should be rebuilt and redeployed if you see this message.
-            throw new Error('Stale build: localhost fallback detected in main.js. Please rebuild and redeploy.');
+            // call the live Worker API endpoint – this must match src/main.ts
+            const response = await fetch(`https://tuber.spoass.workers.dev/api/search?q=${encodeURIComponent(query)}`);
             console.log('API response status:', response.status);
             if (!response.ok) {
                 throw new Error('Search failed');
