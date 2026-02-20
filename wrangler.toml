@@ -1,0 +1,13 @@
+name = "tuber-backend"
+type = "javascript"
+account_id = "3335093fd32547addce581d41f67ffb0"
+workers_dev = true
+main = "dist/worker.js"
+compatibility_date = "2026-02-20"
+
+[build]
+command = "npm run build:worker"
+
+[env.production]
+route = ""
+zone_id = ""

@@ -4,8 +4,9 @@ import * as path from 'path';
 import * as url from 'url';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __filename and __dirname are not needed for Worker build
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 const PORT = 3000;
 

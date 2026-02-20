@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["DOM", "ES2020"],
+    "lib": ["DOM", "ES2020", "WebWorker"],
     "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -10,6 +10,14 @@
     "resolveJsonModule": true,
     "outDir": "dist"
   },
-  "include": ["src/main.ts", "src/server.ts", "src/lib/**/*", "server/index.ts"],
+  "include": [
+    "src/main.ts",
+    "src/server.ts",
+    "src/lib/**/*",
+    "server/index.ts",
+    "src/worker.ts",
+    "src/server/worker-handler.ts",
+    "server/searchHandler.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
