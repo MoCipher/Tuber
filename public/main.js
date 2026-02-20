@@ -881,7 +881,8 @@ class TuberApp {
         this.render();
         try {
             console.log('Attempting API call...');
-            const response = await fetch(`http://localhost:4001/api/search?q=${encodeURIComponent(query)}`);
+            // The localhost fallback has been removed. This file should be rebuilt and redeployed if you see this message.
+            throw new Error('Stale build: localhost fallback detected in main.js. Please rebuild and redeploy.');
             console.log('API response status:', response.status);
             if (!response.ok) {
                 throw new Error('Search failed');
