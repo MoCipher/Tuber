@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc && cp -r public/* dist/ && cp public/_redirects dist/_redirects",
-    "build:worker": "tsc --outDir dist --project tsconfig.json --module commonjs --target es2020",
+    "build:worker": "tsc --outDir dist --project tsconfig.json --module ESNext --target es2020",
     "start": "node dist/src/server.js",
     "start:backend": "node dist/server/index.js",
     "dev": "npm run build && (npm run start:backend & npm run start)",
