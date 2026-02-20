@@ -1193,6 +1193,13 @@ class TuberApp {
         newResults = data;
       } else if (data.results && Array.isArray(data.results)) {
         newResults = data.results;
+      } else if (data.feed && data.feed.entry) {
+        // Handle case where entry might be a single object
+        newResults = Array.isArray(data.feed.entry) ? data.feed.entry : [data.feed.entry];
+        console.log('Data has feed.entry (converted to array), length:', newResults.length);
+      } else {
+        console.warn('Unexpected API response format:', data);
+        newResults = [];
       }
 
       console.log('New results count:', newResults.length);
@@ -1205,7 +1212,7 @@ class TuberApp {
             title: item.title || item['media:title'] || 'Unknown Title',
             channel: item.channelTitle || item.author?.name || item['yt:channelTitle'] || 'Unknown Channel',
             thumbnail: item.thumbnail || item.thumbnails?.[0]?.url || item['media:thumbnail']?.['@url'] || (videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : 'https://via.placeholder.com/320x180/9333ea/ffffff?text=Video'),
-            duration: item.duration || (item.durationSeconds ? this.formatDuration(item.durationSeconds) : 'Unknown') || 'Unknown',
+            duration: item.duration || (item.durationSeconds ? this.formatDuration(item.durationSeconds) : 'Unknown') || (item.lengthSeconds ? this.formatDuration(item.lengthSeconds) : 'Unknown') || 'Unknown',
             url: item.url || item.link?.[0]?.['@href'] || (videoId ? `https://youtube.com/watch?v=${videoId}` : '#'),
             channelId: item.channelId || item['yt:channelId'] || '',
             viewCount: item.viewCount || item.viewCountText || '0 views',
