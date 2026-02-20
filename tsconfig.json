@@ -8,8 +8,8 @@
     "skipLibCheck": true,
     "strict": true,
     "resolveJsonModule": true,
-    "outDir": "public"
+    "outDir": "dist"
   },
-  "include": ["src/main.ts", "src/lib/**/*"],
-  "exclude": ["node_modules", "dist", "server"]
+  "include": ["src/main.ts", "src/server.ts", "src/lib/**/*", "server/index.ts"],
+  "exclude": ["node_modules", "dist"]
 }

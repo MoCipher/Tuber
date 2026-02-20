@@ -2,6 +2,10 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = 3000;
 
@@ -21,17 +25,19 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  const filePath = path.join(__dirname, '..', 'public', pathname);
+    const filePath = path.join(__dirname, '../../public', pathname);
+    console.log(`[Request] ${req.method} ${req.url} => ${filePath}`);
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
-      if (err.code === 'ENOENT') {
-        res.writeHead(404);
-        res.end('File not found');
-      } else {
-        res.writeHead(500);
-        res.end('Internal server error');
-      }
+        console.error(`[Error] Reading file: ${filePath}`, err);
+        if (err.code === 'ENOENT') {
+          res.writeHead(404);
+          res.end('File not found');
+        } else {
+          res.writeHead(500);
+          res.end('Internal server error');
+        }
       return;
     }
 
@@ -69,6 +75,6 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Pure TypeScript server running at http://localhost:${PORT}`);
 });
