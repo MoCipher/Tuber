@@ -1177,7 +1177,7 @@ class TuberApp {
     try {
       // Fetch more results with offset
       const offset = this.state.results.length;
-      const response = await fetch(`http://localhost:4001/api/search?q=${encodeURIComponent(this.state.query)}&offset=${offset}`);
+      const response = await fetch(`https://tuber.spoass.workers.dev/api/search?q=${encodeURIComponent(this.state.query)}&offset=${offset}`);
       
       if (!response.ok) {
         throw new Error(`Load more failed: ${response.status}`);
@@ -1310,7 +1310,7 @@ class TuberApp {
 
     try {
       console.log('Attempting API call...');
-      const response = await fetch(`http://localhost:4001/api/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`https://tuber.spoass.workers.dev/api/search?q=${encodeURIComponent(query)}`);
       console.log('API response status:', response.status);
       if (!response.ok) {
         throw new Error('Search failed');
